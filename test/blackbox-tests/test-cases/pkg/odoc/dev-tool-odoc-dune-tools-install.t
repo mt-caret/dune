@@ -2,11 +2,6 @@ Test that `dune tools install odoc` lets `dune build @doc` pick up the locked
 odoc binary without requiring DUNE_CONFIG__LOCK_DEV_TOOL=enabled, mirroring
 the behaviour of `dune tools install ocamlformat` + `dune fmt`.
 
-This documents a current bug: `odoc_program` in src/dune_rules/odoc.ml only
-inspects the compile-time `lock_dev_tools` flag and never falls back to an
-`Fs_memo.dir_exists` check on the lockdir, unlike
-`Ocamlformat.dev_tool_lock_dir_exists` in src/dune_rules/format_rules.ml.
-
   $ mkrepo
   $ make_mock_odoc_package
   $ mk_ocaml 5.2.0
@@ -59,22 +54,20 @@ lockdir and invokes the mock odoc (which prints "hello from fake odoc"):
   [1]
 
 Without the feature flag, `dune build @doc` should also pick up the locked
-odoc (as `dune fmt` does with ocamlformat). Currently it instead falls back
-to a PATH lookup and fails with "Program odoc not found" — this is the bug:
+odoc (as `dune fmt` does with ocamlformat):
 
   $ dune build @doc
+  hello from fake odoc
+  hello from fake odoc
   File "_doc/_html/_unknown_", line 1, characters 0-0:
-  Error: Program odoc not found in the tree or in PATH
-   (context: default)
-  Hint: opam install odoc
+  Error: Rule failed to produce directory "_doc/_html/odoc.support"
   File "_doc/_odoc/pkg/foo/_unknown_", line 1, characters 0-0:
-  Error: Program odoc not found in the tree or in PATH
-   (context: default)
-  Hint: opam install odoc
+  Error: Rule failed to generate the following targets:
+  - _doc/_odoc/pkg/foo/page-index.odoc
   [1]
 
-Removing the lockdir should leave `dune build @doc` in the same failing state
-(PATH lookup), confirming the locked odoc was the only possible source:
+After removing the lockdir, `dune build @doc` falls back to a PATH lookup
+and fails (no odoc is installed in the test environment):
 
   $ rm -r "${dev_tool_lock_dir}"
   $ dune build @doc
