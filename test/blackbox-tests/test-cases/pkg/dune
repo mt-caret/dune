@@ -70,7 +70,8 @@
   pin-depends
   extra-sources
   fetch-cache-symlink
-  broken-symlink-in-dependency))
+  broken-symlink-in-dependency
+  pin-stanza/relative-file-url-crash))
 
 (cram
  (deps %{bin:md5sum})
